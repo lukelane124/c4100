@@ -3,8 +3,9 @@
 .global show_eax
 
 eax_msg: .ascii "The value in the EAX register is: "
-eax_val: .asciz "0000000000"  /* ten spaces, the max number of digits in an unsigned int /*
-
+eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
+cursor_location:.short 0
+/*
 show_eax:
      	set up ebp
        push offset of eax_val onto stack
@@ -121,7 +122,12 @@ Stay:
 	jmp Stay
 	ret	
 	
-	
+updateScr:
+	push ebp
+	mov ebp, esi			//Setup stack frame
+
+	push eax
+	push 
 End_of_S:
 .fill 5000, 1, 0
 
