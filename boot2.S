@@ -25,7 +25,7 @@ show_eax:
 
 	call clearScr
 	push offset eax_val	//Setup stack for convert num, send eax value, and str buffer.
-	mov eax, offset 12
+
 	push eax
 	call convert_num	//call C convert num func.
 
@@ -127,7 +127,8 @@ updateScr:
 	mov ebp, esi			//Setup stack frame
 
 	push eax
-	push 
+	//pus
+
 End_of_S:
 .fill 5000, 1, 0
 
