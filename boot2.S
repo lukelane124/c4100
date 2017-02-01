@@ -29,13 +29,13 @@ show_eax:
 	push eax
 	call convert_num	//call C convert num func.
 
-	sub esp, 12		//"clean" stack.
+	add esp, 8		//"clean" stack.
 
 	push 18			//push on col, row, and str ptr.
 	push 11
 	push offset eax_msg
 	call writeScr
-	sub esp, 12		// call writeScr, then clean up stack.
+	add esp, 12		// call writeScr, then clean up stack.
 	
 	
 	popf
