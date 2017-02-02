@@ -5,6 +5,7 @@
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
 cursor_location:.short 0
+color: .byte 32
 /*
 show_eax:
      	set up ebp
@@ -31,7 +32,7 @@ show_eax:
 
 	add esp, 8		//"clean" stack.
 
-	push 18			//push on col, row, and str ptr.
+	push 19			//push on col, row, and str ptr.
 	push 11
 	push offset eax_msg
 	call writeScr
@@ -59,13 +60,15 @@ writeScr:
 	add eax, 0xb8000		//Offest to video memory.
 	push edi			//PUSH to preserve edi
 	mov edi, eax
+	mov ebx, offset color
+	mov eax, [ebx]
 writeScr_char:				//Write individual characers to the screen, from a null terminated string.
 	mov bl, [esi]			//Load the char from he address pointed to by esi.
 	cmp bl, 0			//Compare that will 0, or null, to determine if end of string.
 	je writeScr_done		//If end of string jump to cleanup procedure, otherwise write contine.
 	movsb				//Actually write a char from the string to memory address for video.
 	
-	mov eax, offset 32		//Use eax register as temp variable to hold color byte.
+			 		//Use eax register as temp variable to hold color byte.
 	mov [edi], al			//move temp variable into memory address referenced by edi.
 	inc edi				//increment edi so that movsb doesn't overwrite color bit.
 	jmp writeScr_char		//Repeat till null termination is found.
@@ -122,12 +125,6 @@ Stay:
 	jmp Stay
 	ret	
 	
-updateScr:
-	push ebp
-	mov ebp, esi			//Setup stack frame
-
-	push eax
-	//pus
 
 End_of_S:
 .fill 5000, 1, 0
