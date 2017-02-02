@@ -1,6 +1,7 @@
 //boot2.s
 .intel_syntax noprefix
 .global show_eax
+.global clearScr
 
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int

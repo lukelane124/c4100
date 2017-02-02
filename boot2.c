@@ -1,5 +1,9 @@
 //boot2.c
 
+
+
+
+
 void noShut();
 void show_eax();
 void clearScr();
