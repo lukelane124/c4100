@@ -2,11 +2,12 @@
 .intel_syntax noprefix
 .global show_eax
 .global clearScr
+.global startup
 
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
 cursor_location:.short 0
-color: .byte 32
+color: .byte 31
 /*
 show_eax:
      	set up ebp
@@ -17,6 +18,32 @@ show_eax:
        push parameters for writescr onto stack to print eax_msg
        call writescr
        clean up stack */
+
+//startup();
+startup:
+	call init_keyboard	//Setup keyboard interupt vectors, and key lookup table.
+	call init_watchdog	//Setup watchdog timer for kernel contol garantee.
+	call init_video		//setup video settings for current session.
+	call init_disk
+	call init_process_table	//Setup process table.
+init_keyboard:
+	ret
+init_watchdog:
+	ret
+init_video:
+	ret
+init_disk:
+	ret
+init_process:
+	ret
+init_process_table:
+	call ProcessTableSetup	//Call C function to setup process table.
+	mov eax, offset 0	//Load eax with 0 for first pid.
+	push eax	
+	call init_process	//Add kernel process to process table.
+	add esp, 4
+	ret
+
 
 	
 

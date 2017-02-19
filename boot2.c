@@ -8,6 +8,7 @@ void noShut();
 void show_eax();
 void clearScr();
 void writeScr(char *string, int row, int col);
+void startup();
 
 int convert_num_h(unsigned int num, char buf[]) {
   if (num == 0) {
@@ -19,6 +20,9 @@ int convert_num_h(unsigned int num, char buf[]) {
   return idx + 1;
 }
 
+void ProcessTableSetup() {
+	
+}
 
 void convert_num(unsigned int num, char buf[]) {
   if (num == 0) {
@@ -32,6 +36,9 @@ void convert_num(unsigned int num, char buf[]) {
 
 int main() {
 	show_eax();
+	startup();
+	
+
 	while(1) {}
 	
 }

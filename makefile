@@ -20,7 +20,7 @@ clean:
 install: all
 	echo "Building the floppy image and moving 1's."	
 	./build_image.sh
-.phony run:
+.phony run: install
 	echo "Start Qemu and move 0's."
 	./Start_Qemu_NOdebug.sh
 .phony debug:
