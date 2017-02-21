@@ -20,9 +20,7 @@ int convert_num_h(unsigned int num, char buf[]) {
   return idx + 1;
 }
 
-void ProcessTableSetup() {
-	
-}
+
 
 void convert_num(unsigned int num, char buf[]) {
   if (num == 0) {

@@ -19,30 +19,7 @@ show_eax:
        call writescr
        clean up stack */
 
-//startup();
-startup:
-	call init_keyboard	//Setup keyboard interupt vectors, and key lookup table.
-	call init_watchdog	//Setup watchdog timer for kernel contol garantee.
-	call init_video		//setup video settings for current session.
-	call init_disk
-	call init_process_table	//Setup process table.
-init_keyboard:
-	ret
-init_watchdog:
-	ret
-init_video:
-	ret
-init_disk:
-	ret
-init_process:
-	ret
-init_process_table:
-	call ProcessTableSetup	//Call C function to setup process table.
-	mov eax, offset 0	//Load eax with 0 for first pid.
-	push eax	
-	call init_process	//Add kernel process to process table.
-	add esp, 4
-	ret
+
 
 
 	
