@@ -2,10 +2,12 @@
 .intel_syntax noprefix
 .global show_eax
 .global clearScr
-.global startup
+.global outportb
 
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
+keyscan_msg: .ascii "Got a key: "
+keyscan_val: .asciz "0000000000"
 cursor_location:.short 0
 color: .byte 31
 /*
@@ -19,8 +21,30 @@ show_eax:
        call writescr
        clean up stack */
 
-
-
+kdb_enter:
+	pushf
+	cli
+	pusha
+	xor eax, eax		//Clear values in eax register.
+	in al, 0x64		//Check if anything available in physically mapped keyboard port.
+	and al, 0x01		//Clear upper bits to check keyboard status for available keys.
+	jz _kdb_skip		//If there isn''t anything to be read from the keyboard continue...
+	in al, 0x60		//Read value from keyboard mem.
+	push offset keyscan_val	//Push last variable for convert_num
+	push eax		//push the keyscan code.
+	call convert_num	//Load keyscan_val with decimal value of eax.
+	add esp, 8		//Cleanup stack from conver_num call.
+	push 0
+	push 0			//Setup stack for writeScr call.
+	push offset keyscan_msg
+	call writeScr		//Write keyscan code to screen.
+	add esp, 12		//Cleanup stack from writeScr call.
+_kdb_skip:
+	mov al, 0x20		//Load al with hex 20, which symbolizes end of interupt to keyboard.
+	out 0x20, al		//output End-of_Interrupt to keyboard.
+	popa
+	popf			//Return initail values to registers, and return.
+	iret
 
 	
 
@@ -75,9 +99,11 @@ writeScr_char:				//Write individual characers to the screen, from a null termin
 	
 			 		//Use eax register as temp variable to hold color byte.
 	mov [edi], al			//move temp variable into memory address referenced by edi.
-	inc edi				//increment edi so that movsb doesn't overwrite color bit.
+	inc edi				//increment edi so that movsb doesn''t overwrite color bit.
 	jmp writeScr_char		//Repeat till null termination is found.
 writeScr_done:				//While string written, clean up.
+
+
 	pop edi
 	pop eax				//Return stored values from stack.
 	pop esi
@@ -125,14 +151,42 @@ clearScr_build_string_end:		//Calls write screen to print spaces, and cleans up.
 	popf
 	pop ebp				//clean up stack frame
 	ret
+
+
+
+
 Stay:
 
 	jmp Stay
 	ret	
-	
 
+
+outportb:
+	push ebp
+	mov ebp, esi;			//SEtup stack frame.
+	push eax
+	push edx
+	pushf
+	xor eax, eax			//Preserve register state, and clear them.
+	xor edx, edx
+	mov eax, [ebp+12]		//Load byte arg for port.
+	mov edx, [ebp+8]		//Load the port address.
+	lock
+	out dx, al
+	popf
+	pop edx
+	pop eax
+	ret
+
+
+
+
+// IDT:
+.fill 256, 8, 0				//Generate room for IDT
+
+	
 End_of_S:
-.fill 5000, 1, 0
+.fill 5000, 1, 0			//MT space for filling strings.
 
 
 

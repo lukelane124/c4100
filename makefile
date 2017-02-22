@@ -1,6 +1,6 @@
 all: boot2 boot1
 
-boot2: boot2.exe
+boot2: boot2.exe boot2.S
 	objcopy -S -O binary boot2.exe boot2
 boot1: boot1.asm boot1.asm
 	nasm -l boot1.list -DENTRY=`./getaddr.sh main` boot1.asm

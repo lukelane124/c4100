@@ -1,14 +1,25 @@
 //boot2.c
+//Declare a struct with 64 bits... Might work, might not.
+#include<stdint.h>
+typedef struct IDT {
+	uint16_t base_high;
+	uint8_t access;
+	uint8_t selector;
+	uint16_t base_low;
+  // unsigned int base_high : 16;
+  // unsigned int access : 8;
+  // unsigned int selector : 8;
+  // unsigned int base_low : 16;
+} idt;
 
-
-
-
+idt idt_entry_t[256];
+void initIDTEntry(idt *entry, uint32_t base, uint16_t selector, uint8_t access);
 
 void noShut();
 void show_eax();
 void clearScr();
 void writeScr(char *string, int row, int col);
-void startup();
+
 
 int convert_num_h(unsigned int num, char buf[]) {
   if (num == 0) {
@@ -34,7 +45,7 @@ void convert_num(unsigned int num, char buf[]) {
 
 int main() {
 	show_eax();
-	startup();
+	
 	
 
 	while(1) {}
