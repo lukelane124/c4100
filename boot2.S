@@ -136,21 +136,21 @@ Stay:
 	ret	
 
 
-outportb:
-	push ebp
-	mov ebp, esi;			//SEtup stack frame.
-	push eax				//Preserve register state, and clear them.
-	push edx
-	pushf
-	mov eax, [ebp+12]		//Load byte arg for port.
-	mov edx, [ebp+8]		//Load the port address.
-	lock
-	out dx, al
-	popf
-	pop edx
-	pop eax
-	pop ebp
-	ret
+// outportb:
+// 	push ebp
+// 	mov ebp, esi;			//SEtup stack frame.
+// 	push eax				//Preserve register state, and clear them.
+// 	push edx
+// 	pushf
+// 	mov eax, [ebp+12]		//Load byte arg for port.
+// 	mov edx, [ebp+8]		//Load the port address.
+// 	lock
+// 	out dx, al
+// 	popf
+// 	pop edx
+// 	pop eax
+// 	pop ebp
+// 	ret
 
 
 
@@ -185,7 +185,7 @@ _kdb_skip:
 
 
 
-	
+//Space reserved for OS data structures, Do not declare any functions past this point.
 End_of_S:
 .fill 5000, 1, 0			//MT space for filling strings.
 

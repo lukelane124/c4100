@@ -19,6 +19,7 @@ void noShut();
 void show_eax();
 void clearScr();
 void writeScr(char *string, int row, int col);
+//void outportb(unsigned int, unsigned int);
 void updateCursor(unsigned int loc) {
 	//int loc = 5;
   outportb(0x3D4, 0x0f);
@@ -26,7 +27,16 @@ void updateCursor(unsigned int loc) {
   outportb(0x3D4, 0x0e);
   outportb(0x3d5, ((loc >> 8) & 0xFF));
 }
-
+inline void outportb(unsigned int port,unsigned char value)
+{
+   asm volatile ("outb %%al,%%dx": :"d" (port), "a" (value));
+}
+inline unsigned char inportb(unsigned int port)
+{
+   unsigned char ret;
+   asm volatile ("inb %%dx,%%al":"=a" (ret):"d" (port));
+   return ret;
+}
 int convert_num_h(unsigned int num, char buf[]) {
   if (num == 0) {
     return 0;
