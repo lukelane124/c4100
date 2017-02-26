@@ -17,7 +17,7 @@ boot2.exe: boot2_S.o boot2_c.o
 .phony clean:
 clean: 
 	rm *.o boot2.exe boot1 boot2 boot1.list a.img
-.phony install: 
+ 
 install: alls
 	echo "Building the floppy image and moving 1's."	
 	bximage -fd -size=1.44 -q a.img
