@@ -1,4 +1,5 @@
-all: boot2 boot1
+all: install
+alls: boot2 boot1 
 
 boot2: boot2.exe boot2.S
 	objcopy -S -O binary boot2.exe boot2
@@ -17,12 +18,19 @@ boot2.exe: boot2_S.o boot2_c.o
 clean: 
 	rm *.o boot2.exe boot1 boot2 boot1.list a.img
 .phony install: 
-install: all
+install: alls
 	echo "Building the floppy image and moving 1's."	
-	./build_image.sh
+	bximage -fd -size=1.44 -q a.img
+
+	mformat a:
+	dd if=boot1 of=a.img bs=1 count=512 conv=notrunc
+	mcopy -o boot2 a:BOOT2
 .phony run: install
 	echo "Start Qemu and move 0's."
-	./Start_Qemu_NOdebug.sh
+	qemu-system-i386 -boot a -fda a.img &
 .phony debug:
-debug:
-	./Start_Qemu_debug.sh
+debug: all
+	qemu-system-i386 -S -s -boot a -fda a.img &
+	echo "At the gdb prompt enter \"target remote localhost:1234\""
+	ddd boot2.exe &
+

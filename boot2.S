@@ -10,41 +10,8 @@ keyscan_msg: .ascii "Got a key: "
 keyscan_val: .asciz "0000000000"
 cursor_location:.short 0
 color: .byte 31
-/*
-show_eax:
-     	set up ebp
-       push offset of eax_val onto stack
-       push val of eax onto stack
-       call the C convert_num function
-       clean up stack
-       push parameters for writescr onto stack to print eax_msg
-       call writescr
-       clean up stack */
 
-kdb_enter:
-	pushf
-	cli
-	pusha
-	xor eax, eax		//Clear values in eax register.
-	in al, 0x64		//Check if anything available in physically mapped keyboard port.
-	and al, 0x01		//Clear upper bits to check keyboard status for available keys.
-	jz _kdb_skip		//If there isn''t anything to be read from the keyboard continue...
-	in al, 0x60		//Read value from keyboard mem.
-	push offset keyscan_val	//Push last variable for convert_num
-	push eax		//push the keyscan code.
-	call convert_num	//Load keyscan_val with decimal value of eax.
-	add esp, 8		//Cleanup stack from conver_num call.
-	push 0
-	push 0			//Setup stack for writeScr call.
-	push offset keyscan_msg
-	call writeScr		//Write keyscan code to screen.
-	add esp, 12		//Cleanup stack from writeScr call.
-_kdb_skip:
-	mov al, 0x20		//Load al with hex 20, which symbolizes end of interupt to keyboard.
-	out 0x20, al		//output End-of_Interrupt to keyboard.
-	popa
-	popf			//Return initail values to registers, and return.
-	iret
+
 
 	
 
@@ -74,6 +41,8 @@ show_eax:
        ret
 
 
+//Utilities
+
 writeScr:
 	push ebp
 	mov ebp, esp	//Setup stack frame
@@ -88,6 +57,7 @@ writeScr:
 	imul eax, 2			//multiply by two to get the correct offset, accounting for the color bits of each char.
 	add eax, 0xb8000		//Offest to video memory.
 	push edi			//PUSH to preserve edi
+	push ebx
 	mov edi, eax
 	mov ebx, offset color
 	mov eax, [ebx]
@@ -102,8 +72,13 @@ writeScr_char:				//Write individual characers to the screen, from a null termin
 	inc edi				//increment edi so that movsb doesn''t overwrite color bit.
 	jmp writeScr_char		//Repeat till null termination is found.
 writeScr_done:				//While string written, clean up.
-
-
+	mov eax, edi
+	sub eax, 0xb8000
+	ror eax, 1
+	push eax
+	call updateCursor
+	add esp, 4
+	pop ebx
 	pop edi
 	pop eax				//Return stored values from stack.
 	pop esi
@@ -164,11 +139,9 @@ Stay:
 outportb:
 	push ebp
 	mov ebp, esi;			//SEtup stack frame.
-	push eax
+	push eax				//Preserve register state, and clear them.
 	push edx
 	pushf
-	xor eax, eax			//Preserve register state, and clear them.
-	xor edx, edx
 	mov eax, [ebp+12]		//Load byte arg for port.
 	mov edx, [ebp+8]		//Load the port address.
 	lock
@@ -176,13 +149,41 @@ outportb:
 	popf
 	pop edx
 	pop eax
+	pop ebp
 	ret
 
 
 
 
-// IDT:
-.fill 256, 8, 0				//Generate room for IDT
+
+//Interupt Section.
+
+kdb_enter:
+	pushf
+	cli
+	pusha
+	xor eax, eax		//Clear values in eax register.
+	in al, 0x64		//Check if anything available in physically mapped keyboard port.
+	and al, 0x01		//Clear upper bits to check keyboard status for available keys.
+	jz _kdb_skip		//If there isn''t anything to be read from the keyboard continue...
+	in al, 0x60		//Read value from keyboard mem.
+	push offset keyscan_val	//Push last variable for convert_num
+	push eax		//push the keyscan code.
+	call convert_num	//Load keyscan_val with decimal value of eax.
+	add esp, 8		//Cleanup stack from conver_num call.
+	push 0
+	push 0			//Setup stack for writeScr call.
+	push offset keyscan_msg
+	call writeScr		//Write keyscan code to screen.
+	add esp, 12		//Cleanup stack from writeScr call.
+_kdb_skip:
+	mov al, 0x20		//Load al with hex 20, which symbolizes end of interupt to keyboard.
+	out 0x20, al		//output End-of_Interrupt to keyboard.
+	popa
+	popf			//Return initail values to registers, and return.
+	iret
+
+
 
 	
 End_of_S:

@@ -19,7 +19,13 @@ void noShut();
 void show_eax();
 void clearScr();
 void writeScr(char *string, int row, int col);
-
+void updateCursor(unsigned int loc) {
+	//int loc = 5;
+  outportb(0x3D4, 0x0f);
+  outportb(0x3d5, (loc & 0xFF));
+  outportb(0x3D4, 0x0e);
+  outportb(0x3d5, ((loc >> 8) & 0xFF));
+}
 
 int convert_num_h(unsigned int num, char buf[]) {
   if (num == 0) {
