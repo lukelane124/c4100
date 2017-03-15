@@ -3,13 +3,17 @@
 .global show_eax
 .global clearScr
 .global outportb
-
+.global default_handler
+.global lidtr
+.global kdb_enter
+//Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
 keyscan_msg: .ascii "Got a key: "
 keyscan_val: .asciz "0000000000"
 cursor_location:.short 0
 color: .byte 31
+Kernel_Panic_msg:	.asciz "The kernel has experienced a panic, sorry.... System will now halt, reccomend taking a core dump."
 
 
 
@@ -42,6 +46,17 @@ show_eax:
 
 
 //Utilities
+
+lidtr:
+	// push ebp
+	// mov ebp esp				//Stack fram
+	// // push eax
+	// // mov eax, [ebp+8]		//preserve and load eax with passed mem location for idt table
+	// lidt [ebp+8]			//Load hardware IDT with passed idt table.
+	// //pop eax
+	// pop ebp
+	lidt [esp+4]
+	ret
 
 writeScr:
 	push ebp
@@ -136,21 +151,21 @@ Stay:
 	ret	
 
 
-// outportb:
-// 	push ebp
-// 	mov ebp, esi;			//SEtup stack frame.
-// 	push eax				//Preserve register state, and clear them.
-// 	push edx
-// 	pushf
-// 	mov eax, [ebp+12]		//Load byte arg for port.
-// 	mov edx, [ebp+8]		//Load the port address.
-// 	lock
-// 	out dx, al
-// 	popf
-// 	pop edx
-// 	pop eax
-// 	pop ebp
-// 	ret
+outportb:
+	push ebp
+	mov ebp, esp;			//SEtup stack frame.
+	push eax				//Preserve register state, and clear them.
+	push edx
+	pushf
+	mov eax, [ebp+12]		//Load byte arg for port.
+	mov edx, [ebp+8]		//Load the port address.
+	lock
+	out dx, al
+	popf
+	pop edx
+	pop eax
+	pop ebp
+	ret
 
 
 
@@ -158,29 +173,38 @@ Stay:
 
 //Interupt Section.
 
+default_handler:
+	push offset Kernel_Panic_msg		//Push starting address of Kernel panic message.
+	push offset 0						//Push location on screen to start writing the message.
+	push offset 0
+	call writeScr
+	add esp, 12
+	iret
+
 kdb_enter:
 	pushf
 	cli
 	pusha
-	xor eax, eax		//Clear values in eax register.
-	in al, 0x64		//Check if anything available in physically mapped keyboard port.
-	and al, 0x01		//Clear upper bits to check keyboard status for available keys.
-	jz _kdb_skip		//If there isn''t anything to be read from the keyboard continue...
-	in al, 0x60		//Read value from keyboard mem.
-	push offset keyscan_val	//Push last variable for convert_num
-	push eax		//push the keyscan code.
-	call convert_num	//Load keyscan_val with decimal value of eax.
-	add esp, 8		//Cleanup stack from conver_num call.
+	xor eax, eax				//Clear values in eax register.
+	in al, 0x64					//Check if anything available in physically mapped keyboard port.
+	and al, 0x01				//Clear upper bits to check keyboard status for available keys.
+	jz _kdb_skip				//If there isn''t anything to be read from the keyboard continue...
+	in al, 0x60					//Read value from keyboard mem.
+	push offset keyscan_val		//Push last variable for convert_num
+	push eax					//push the keyscan code.
+	call convert_num			//Load keyscan_val with decimal value of eax.
+	add esp, 8					//Cleanup stack from conver_num call.
 	push 0
-	push 0			//Setup stack for writeScr call.
+	push 0						//Setup stack for writeScr call.
 	push offset keyscan_msg
-	call writeScr		//Write keyscan code to screen.
-	add esp, 12		//Cleanup stack from writeScr call.
+	call writeScr				//Write keyscan code to screen.
+	add esp, 12					//Cleanup stack from writeScr call.
 _kdb_skip:
-	mov al, 0x20		//Load al with hex 20, which symbolizes end of interupt to keyboard.
-	out 0x20, al		//output End-of_Interrupt to keyboard.
+	mov al, 0x20				//Load al with hex 20, which symbolizes end of interupt to keyboard.
+	out 0x20, al				//output End-of_Interrupt to keyboard.
 	popa
-	popf			//Return initail values to registers, and return.
+	popf						//Return initial values to registers, and return from interrup.tsetup.office365.com
+	
 	iret
 
 
