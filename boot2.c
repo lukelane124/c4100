@@ -3,7 +3,7 @@
 #include<stdint.h>
 struct IDT_s {
 	uint16_t base_low;
-	uint8_t selector;
+	uint16_t selector;
 	uint8_t always0;
 	uint8_t access;
 	uint16_t base_high;
@@ -48,8 +48,8 @@ void initIDT() {
 	}
 	gdt_r_t gdt;
 	gdt.base = (uint32_t) idt_entry_t;
-	gdt.limit= (uint16_t) sizeof(idt_entry_t);
-	lidtr(gdt);
+	gdt.limit= (uint16_t) sizeof(idt_entry_t) - 1;
+	lidtr(&gdt);
 }
 
 void setupPIC() {
@@ -120,6 +120,7 @@ int main() {
 	clearScr();
 	initIDT();
 	setupPIC();
+	asm("sti");
 	
 
 	while(1) {}

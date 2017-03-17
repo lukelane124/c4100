@@ -48,14 +48,14 @@ show_eax:
 //Utilities
 
 lidtr:
-	// push ebp
-	// mov ebp esp				//Stack fram
-	// // push eax
-	// // mov eax, [ebp+8]		//preserve and load eax with passed mem location for idt table
-	// lidt [ebp+8]			//Load hardware IDT with passed idt table.
-	// //pop eax
-	// pop ebp
-	lidt [esp+4]
+	 push ebp
+	 mov ebp, esp				//Stack fram
+	 push eax
+	 mov eax, [ebp+8]		//preserve and load eax with passed mem location for idt table
+	 lidt [eax]			//Load hardware IDT with passed idt table.
+	 pop eax
+	 pop ebp
+	//lidt [esp+4]
 	ret
 
 writeScr:
@@ -204,7 +204,7 @@ _kdb_skip:
 	out 0x20, al				//output End-of_Interrupt to keyboard.
 	popa
 	popf						//Return initial values to registers, and return from interrup.tsetup.office365.com
-	
+
 	iret
 
 
