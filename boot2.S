@@ -202,8 +202,7 @@ kdb_enter:
 	and al, 0x01				//Clear upper bits to check keyboard status for available keys.
 	jz _kdb_skip				//If there isn''t anything to be read from the keyboard continue...
 	in al, 0x60					//Read value from keyboard mem.
-	cmp al, 0xe
-	jz _kdb_skip
+	call clearScr
 	push offset keyscan_val		//Push last variable for convert_num
 	push eax					//push the keyscan code.
 	call convert_num			//Load keyscan_val with decimal value of eax.
