@@ -6,6 +6,8 @@
 .global default_handler
 .global lidtr
 .global kdb_enter
+.global writeScr
+.global causeFault
 //Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
@@ -13,11 +15,20 @@ keyscan_msg: .ascii "Got a key: "
 keyscan_val: .asciz "0000000000"
 cursor_location:.short 0
 color: .byte 31
-Kernel_Panic_msg:	.asciz "The kernel has experienced a panic, sorry.... System will now halt, reccomend taking a core dump."
+Kernel_Panic_msg:	.ascii "The kernel has experienced a panic, "
+					.asciz "sorry.... System will now halt, reccomend taking a core dump."
 
+IntCounter: .short 0
 
-
-	
+causeFault:
+	push eax
+	push ebx
+	mov eax, 50
+	mov ebx, 0
+	div bl
+	pop ebx
+	pop eax
+	ret
 
 show_eax:
 	push ebp		//Setup stack frame
@@ -174,9 +185,10 @@ outportb:
 //Interupt Section.
 
 default_handler:
-	push offset Kernel_Panic_msg		//Push starting address of Kernel panic message.
-	push offset 0						//Push location on screen to start writing the message.
-	push offset 0
+	//writeScr(char *string, int row, int col);
+	push offset 0		//Push starting address of Kernel panic message.
+	push offset 5						//Push location on screen to start writing the message.
+	push offset Kernel_Panic_msg
 	call writeScr
 	add esp, 12
 	iret
@@ -190,6 +202,8 @@ kdb_enter:
 	and al, 0x01				//Clear upper bits to check keyboard status for available keys.
 	jz _kdb_skip				//If there isn''t anything to be read from the keyboard continue...
 	in al, 0x60					//Read value from keyboard mem.
+	cmp al, 0xe
+	jz _kdb_skip
 	push offset keyscan_val		//Push last variable for convert_num
 	push eax					//push the keyscan code.
 	call convert_num			//Load keyscan_val with decimal value of eax.

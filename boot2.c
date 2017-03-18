@@ -114,13 +114,14 @@ void convert_num(unsigned int num, char buf[]) {
   }
 }
 
-
+void causeFault();
 int main() {
 	//show_eax();
 	clearScr();
 	initIDT();
 	setupPIC();
 	asm("sti");
+	//causeFault();
 	
 
 	while(1) {}
