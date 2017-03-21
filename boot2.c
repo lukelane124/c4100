@@ -104,7 +104,7 @@ SEVEN_PRESSED = 0x8, EIGHT_PRESSED = 0x9, NINE_PRESSED = 0xA
 
 #define CSET_ZERO 0x0B
 
-#define CSET_NL 0x1C
+#define CSET_NL 0x1c
 #define CSET_SPC 0x39
 #define CSET_RET 0xE
 #define CSET_POINT_PRESSED 0x34
@@ -129,7 +129,7 @@ keyboardBuffer_t keyboard_buffer;
 //C Functions.
 char translate_scancode(int code) {
 	//return 'k'
-	if (code > 0x9 && code < 0x20)
+	if (code > 0x9 && code < 0x1a)
 		return cset_1_chars[code - 0x10];
 	if (code > 0x1d && code < 0x27)
 		return cset_2_chars[code - 0x1e];
@@ -144,7 +144,7 @@ char translate_scancode(int code) {
 	if (code == CSET_SPC)
 		return ' ';
 	if (code == CSET_RET)
-		return 8;
+		return 0xe;
 	if (code == CSET_POINT_PRESSED)
 		return '.';
 	if (CSET_SLASH_PRESSED == code)
@@ -260,22 +260,23 @@ int main() {
 		else if (ch == '\n') {
 			col = 0;
 			row++;
-			if (row == 26) {
+			if (row > 24) {
 				row = 0;
 				col = 0;
-				clearScr();
+				//clearScr();
 			}
+			updateCursor(row * 80 + col);
 		}
 		else {
 			str[0] = ch;
 			writeScr(str, row, col);
 			col++;
-			if (col == 81) {
+			if (col > 79) {
 				col = 0;
 				row++;
 			}
-			if (row == 26) {
-				clearScr();
+			if (row > 24) {
+				//clearScr();
 				row = 0;
 				col = 0;
 			}
