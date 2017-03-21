@@ -201,17 +201,13 @@ kdb_enter:
 	in al, 0x64					//Check if anything available in physically mapped keyboard port.
 	and al, 0x01				//Clear upper bits to check keyboard status for available keys.
 	jz _kdb_skip				//If there isn''t anything to be read from the keyboard continue...
-	in al, 0x60					//Read value from keyboard mem.
-	call clearScr
-	push offset keyscan_val		//Push last variable for convert_num
-	push eax					//push the keyscan code.
-	call convert_num			//Load keyscan_val with decimal value of eax.
-	add esp, 8					//Cleanup stack from conver_num call.
-	push 0
-	push 0						//Setup stack for writeScr call.
-	push offset keyscan_msg
-	call writeScr				//Write keyscan code to screen.
-	add esp, 12					//Cleanup stack from writeScr call.
+	in al, 0x60					//Read value from keyboard mem
+	push eax 					//Push value of scancode to the stack
+	call translate_scancode		//Call translate scanscode to get character back.
+	add esp, 4					//Clean stack from translateScancode.
+	push eax 					//Push char to stack.
+	call kdb_handler			//Add character to keyboard buffer. In Theory.
+	add esp, 4					//Cleanup stack from buffer call.
 _kdb_skip:
 	mov al, 0x20				//Load al with hex 20, which symbolizes end of interupt to keyboard.
 	out 0x20, al				//output End-of_Interrupt to keyboard.
@@ -219,6 +215,30 @@ _kdb_skip:
 	popf						//Return initial values to registers, and return from interrup.tsetup.office365.com
 
 	iret
+
+kdb_handler:
+	push ebp
+	mov ebp, esp
+	pusha
+	mov eax, [ebp+8]
+	cmp eax, 0
+	jz _kdb_handler_skip
+	mov ebx, offset keyboard_buffer
+	mov ecx, [ebx+6]
+	mov edx, [ebx+8]
+	cmp ecx, edx
+	jz _kdb_handler_skip
+	push eax
+	call translate_scancode
+	add esp, 4
+	push eax
+	push offset keyboard_buffer
+	call putItem
+	add esp, 8
+_kdb_handler_skip:
+	popa
+	pop ebp
+	ret
 
 
 
