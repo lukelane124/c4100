@@ -128,19 +128,20 @@ keyboardBuffer_t keyboard_buffer;
 
 //C Functions.
 char translate_scancode(int code) {
+	//return 'k'
 	if (code > 0x9 && code < 0x20)
-		return cset_1_chars[code];
-	if (code > 0x1e && code < 0x27)
-		return cset_2_chars[code];
+		return cset_1_chars[code - 0x10];
+	if (code > 0x1d && code < 0x27)
+		return cset_2_chars[code - 0x1e];
 	if (code > 0x2b && code < 0x33)
-		return cset_3_chars[code];
-	if (code > 0x1 && code < 0xa)
+		return cset_3_chars[code - 0x2c];
+	if (code > 0x1 && code < 0xb)
 		return code - 1;
 	if (code == CSET_ZERO)
 		return '0';
-	if (code = CSET_NL)
+	if (code == CSET_NL)
 		return '\n';
-	if (code = CSET_SPC)
+	if (code == CSET_SPC)
 		return ' ';
 	if (code == CSET_RET)
 		return 8;
@@ -148,6 +149,8 @@ char translate_scancode(int code) {
 		return '.';
 	if (CSET_SLASH_PRESSED == code)
 		return '/';
+	else 
+		return 0;
 }
 char k_getchar() {
 	if (isEmpty(&keyboard_buffer))
@@ -236,7 +239,7 @@ void convert_num(unsigned int num, char buf[]) {
 //Main Program
 int main() {
 	char ch;
-	char* str[2];
+	char str[2];
 	int row = 0;
 	int col = 0;
 	//show_eax();
@@ -245,7 +248,7 @@ int main() {
 	initIDT();
 	setupPIC();
 	asm("sti");
-	str[1] = '\0';
+	str[1] = 0;
 	
 	
 
@@ -254,16 +257,29 @@ int main() {
 
 		if (ch == 0)
 			continue;
+		else if (ch == '\n') {
+			col = 0;
+			row++;
+			if (row == 26) {
+				row = 0;
+				col = 0;
+				clearScr();
+			}
+		}
 		else {
 			str[0] = ch;
-			writeScr(str, row++, col++);
+			writeScr(str, row, col);
+			col++;
+			if (col == 81) {
+				col = 0;
+				row++;
+			}
 			if (row == 26) {
 				clearScr();
 				row = 0;
-			}
-			if (col == 81)
 				col = 0;
+			}
 		}
 	}
-	
 }
+

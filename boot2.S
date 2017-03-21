@@ -203,9 +203,6 @@ kdb_enter:
 	jz _kdb_skip				//If there isn''t anything to be read from the keyboard continue...
 	in al, 0x60					//Read value from keyboard mem
 	push eax 					//Push value of scancode to the stack
-	call translate_scancode		//Call translate scanscode to get character back.
-	add esp, 4					//Clean stack from translateScancode.
-	push eax 					//Push char to stack.
 	call kdb_handler			//Add character to keyboard buffer. In Theory.
 	add esp, 4					//Cleanup stack from buffer call.
 _kdb_skip:
