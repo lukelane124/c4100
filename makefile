@@ -8,7 +8,7 @@ boot1: boot1.asm boot1.asm
 
 boot2_S.o: boot2.S
 	gcc -g -m32 -c -masm=intel -o boot2_S.o boot2.S
-boot2_c.o: boot2.c
+boot2_c.o: boot2.c DataStructs.h
 	gcc -g -m32 -c -o boot2_c.o boot2.c
 boot2.exe: boot2_S.o boot2_c.o
 	ld -g -melf_i386 -Ttext 0x10000 -e main -o boot2.exe boot2_S.o boot2_c.o
@@ -29,7 +29,7 @@ install: alls
 	echo "Start Qemu and move 0's."
 	qemu-system-i386 -boot a -fda a.img &
 .phony debug:
-debug: all
+debug: boot2.exe boot1 boot2 install
 	qemu-system-i386 -S -s -boot a -fda a.img &
 	echo "At the gdb prompt enter \"target remote localhost:1234\""
 	ddd boot2.exe &
