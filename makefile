@@ -1,4 +1,4 @@
-all: install
+all: install alls
 alls: boot2 boot1 
 
 boot2: boot2.exe boot2.S

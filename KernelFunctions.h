@@ -1,4 +1,7 @@
 //KernelInit.h
+#include<stdint.h>
+#include"./DataStructs.h"
+
 void setupPIC() {
 	//set up cascading mode:
 	outportb(0x20, 0x11);		//Start 8259 master initialization.
@@ -15,7 +18,7 @@ void setupPIC() {
 	outportb(0x21, 0x0);
 	outportb(0xa1, 0x0);
 	//Now, enable the keyboard IRQ only:
-	outportb(0x21, 0xfd);		//Turn on the keyboard IRQ.
+	outportb(0x21, 0xfc);		//Turn on the keyboard IRQ, and the timer.
 	outportb(0xa1, 0xff);		//Turn off all others.
 }
 
@@ -88,4 +91,56 @@ char k_getchar(keyboardBuffer_t *kb) {
 	else {
 		return getItem(kb);
 	}
+}
+extern int pcb_count;
+extern PCB_t pcbs [10][sizeof(PCB_t)];
+PCB_t* allocatePCB() {
+	return pcbs[pcb_count++];
+}
+
+extern uint32_t stacks [10][1024];
+extern int next_stack;
+uint32_t allocStack() {
+	return (uint32_t) stacks[next_stack++];
+}
+
+extern PQ process_queue;
+uint32_t createProcess(uint32_t ds, uint32_t ss, uint32_t stackTop,
+	uint32_t cs, uint32_t processEntry) {
+	uint32_t *sp = &stackTop;
+	sp -= 1;
+	*sp = 0x0200;
+	sp -= 1;
+	*sp = cs;
+	sp -= 1;
+	*sp = processEntry;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = 0;
+	sp -= 1;
+	*sp = ds;
+	sp -= 1;
+	*sp = ds;
+	sp -= 1;
+	*sp = ds;
+	sp -= 1;
+	*sp = ds;
+	PCB_t *pcb = allocatePCB();
+	pcb->sp = (uint32_t) sp;
+	pcb->pid = pcb_count++;
+	addProcess(&process_queue, (uint32_t) pcb);
+	return (uint32_t) pcb;
 }

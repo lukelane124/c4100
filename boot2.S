@@ -8,6 +8,9 @@
 .global kdb_enter
 .global writeScr
 .global causeFault
+.global go
+.global schedule
+.global init_timer_device
 //Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
@@ -17,6 +20,7 @@ cursor_location:.short 0
 color: .byte 31
 Kernel_Panic_msg:	.ascii "The kernel has experienced a panic, "
 					.asciz "sorry.... System will now halt, reccomend taking a core dump."
+Schedule_Fault_msg:	.asciz "The kernel fault was caused by a problem with the scheduler!"
 
 IntCounter: .short 0
 
@@ -178,20 +182,112 @@ outportb:
 	pop ebp
 	ret
 
+go:
+	//I''m never returning to main... remove return call cs, and flags.
+	add esp, 4						
+	mov eax, offset process_queue	//load address of PQ into eax
+	push eax							//Pass pq to getProcess, dequeue
+	call getProcess						//Call to get next process.
+	mov ebx, offset currentProcess		//Load pointer curproc with new current process that was dequeued.
+	mov [ebx], eax						
+	add esp, 4							//Clean stack.
+	mov esp, eax						//Move processes sp into esp.
+	pop gs								//Return state of new curProc.
+	pop fs 
+	pop es
+	pop ds
+	popad
+	iret								//Return to cur proc.
 
 
+init_timer_device:
+	push ebp
+	mov ebp, esp						//Setup Stack frame.
+	pushf
+	push eax							//Preserve existing register state.
+	push ebx
+	push edx
+	mov edx, [ebx+8]					//Load passed time constant into edx.
+	mov eax, offset 1196				//Move 1196 into eax for mul with dx.
+	mul dx								//AX now holds lower 16 bits for timer device, that all we care about...
+										//DX holds MSW Most signigicant word, not using it...
+	xchg eax, ebx						//need to move eax val into ebx, need al for out instructions.
+	mov al, 0b00110110
+	lock
+	out 0x43, al						//Send 0x43 to pit, the control byte.
+	xchg ebx, eax						//Need old value of eax back.
+	lock
+	out 0x40, al						//Write LSB for PIT.
+	xchg al, ah
+	lock 
+	out 0x40, al						//Write MSB for PIT.
+
+	pop edx
+	pop ebx
+	pop eax
+	popf
+	pop ebp								//Clean state, and return.
+	ret
+
+
+	
 
 
 //Interupt Section.
 
 default_handler:
-	//writeScr(char *string, int row, int col);
 	push offset 0		//Push starting address of Kernel panic message.
 	push offset 5						//Push location on screen to start writing the message.
 	push offset Kernel_Panic_msg
 	call writeScr
 	add esp, 12
 	iret
+
+schedule:
+	pushad
+	push ds
+	push es
+	push fs
+	push gs
+	mov eax, offset currentProcess
+	mov [eax], esp
+	mov ebx, offset process_queue
+	push eax
+	push ebx
+	call addProcess
+	add esp, 8
+	cmp eax, 0
+	jnz _schedule_cont_causeFault
+	call causeFault
+	mov eax, offset Schedule_Fault_msg
+	push 77
+	push 0
+	push eax
+	call writeScr
+	hlt
+_schedule_cont_causeFault:
+	push offset process_queue
+	call getProcess
+	add esp, 4
+	mov edx, offset currentProcess
+	mov [edx], eax
+	mov esp, [eax]
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popad
+	push eax
+	mov al, 0x20
+	out 0x20, al
+	pop eax
+	iret
+
+
+
+
+
+
 
 kdb_enter:
 	pushf

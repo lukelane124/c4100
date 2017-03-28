@@ -1,6 +1,9 @@
 //DataStructs.h
+#include<stdint.h>
 #define true 1
 #define false 0
+/*#define TRUE 1
+#define FALSE 0*/
 //Structure declaration section
 struct IDT_s {
 	uint16_t base_low;
@@ -108,3 +111,67 @@ static char *cset_4_nums ="123456789";
 #define CSET_RET 0xE
 #define CSET_POINT_PRESSED 0x34
 #define CSET_SLASH_PRESSED 0x35
+
+
+
+struct Round_Robin_queue_s {
+	short top;
+    short tail;
+    short numItems;
+    short mxItems;
+    uint32_t data[MAX_ITEMS];
+}__attribute__((packed));
+typedef struct Round_Robin_queue_s PQ;
+#define Round_Robin_queue_s PQ;
+
+
+void initializeProcessQueue(PQ *q) {
+	int i;
+	q->top = 0;
+	q->tail = 0;
+	q->numItems = 0;
+	q->mxItems = MAX_ITEMS ;
+	for (i = 0; i < MAX_ITEMS; i++) {
+		q->data[i] = 0;
+	}
+	return;
+}
+
+char isProcessEmpty(PQ *q) {
+	if ( q->numItems == 0)
+		return true;
+	else
+		return false;
+}
+
+char addProcess(PQ *q, uint32_t process) {
+	if (q->numItems >= MAX_ITEMS)
+		return false;
+	else {
+		q->data[q->tail++] = process;
+		if (q->tail > MAX_ITEMS)
+			q->tail = 0;
+		q->numItems++;
+		return true;
+	}
+}
+
+uint32_t getProcess(PQ *q) {
+	uint32_t ret;
+	if (isProcessEmpty(q))
+		return 0;
+	else{
+		ret = q->data[q->top++];
+		if (q->top > MAX_ITEMS)
+			q->top = 0;
+		q->numItems--;
+
+	}
+	return ret;	
+}
+
+struct PCB_s {
+	uint32_t sp;
+	int pid;
+}__attribute__((packed));
+typedef struct PCB_s PCB_t;
