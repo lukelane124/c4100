@@ -68,16 +68,24 @@ void p1() {
 }
 
 void p2() {
-	int i = 0;
-	char buff[20];
+	int i2 = 0;
+	char buff2[20];
+	writeScr("Process 2, thanks...", 10,0);
 	while (1) {
-		writeScr("Process 2, thanks...", 10,0);
-		i += 1;
-		convert_num(i, buff);
-		writeScr(buff, 11, 0);
+		
+		i2 += 1;
+		convert_num(i2, buff2);
+		writeScr(buff2, 11, 0);
 	}
 }
 
+
+/*void schedule() {
+	asm("pushad");
+	asm("push ")
+}*/
+//Need to create a method to delay
+//current process.
 
 //Main Program
 int main() {
@@ -95,8 +103,8 @@ int main() {
 	s = (uint32_t) allocStack();
 	createProcess((uint32_t) DATA_SEL, (uint32_t) STACK_SEL, (uint32_t) (s + STACK_SIZE),
 		(uint32_t) CODE_SEL, (uint32_t) p2);
-	init_timer_device();
-	asm("sti");	
+	init_timer_device(50);
+	//asm("sti");	
 	go();
 }
 

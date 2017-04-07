@@ -95,7 +95,7 @@ char k_getchar(keyboardBuffer_t *kb) {
 extern int pcb_count;
 extern PCB_t pcbs [10][sizeof(PCB_t)];
 PCB_t* allocatePCB() {
-	return pcbs[pcb_count++];
+	return pcbs[pcb_count];
 }
 
 extern uint32_t stacks [10][1024];
@@ -107,7 +107,7 @@ uint32_t allocStack() {
 extern PQ process_queue;
 uint32_t createProcess(uint32_t ds, uint32_t ss, uint32_t stackTop,
 	uint32_t cs, uint32_t processEntry) {
-	uint32_t *sp = &stackTop;
+	uint32_t *sp = (uint32_t)stackTop;
 	sp -= 1;
 	*sp = 0x0200;
 	sp -= 1;

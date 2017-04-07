@@ -184,20 +184,22 @@ outportb:
 
 go:
 	//I''m never returning to main... remove return call cs, and flags.
-	add esp, 4						
+	//add esp, 4						
 	mov eax, offset process_queue	//load address of PQ into eax
 	push eax							//Pass pq to getProcess, dequeue
 	call getProcess						//Call to get next process.
-	mov ebx, offset currentProcess		//Load pointer curproc with new current process that was dequeued.
-	mov [ebx], eax						
+	# mov ebx, offset currentProcess		//Load pointer curproc with new current process that was dequeued.
+	# mov [ebx], eax
+	mov [currentProcess], eax						
 	add esp, 4							//Clean stack.
-	mov esp, eax						//Move processes sp into esp.
+	mov esp, [eax]						//Move processes sp into esp.
 	pop gs								//Return state of new curProc.
 	pop fs 
 	pop es
 	pop ds
 	popad
 	iret								//Return to cur proc.
+
 
 
 init_timer_device:
@@ -236,8 +238,9 @@ init_timer_device:
 //Interupt Section.
 
 default_handler:
-	push offset 0		//Push starting address of Kernel panic message.
-	push offset 5						//Push location on screen to start writing the message.
+	push offset 0						//Push starting address of Kernel panic message.
+	push offset 5						
+	//Push location on screen to start writing the message.
 	push offset Kernel_Panic_msg
 	call writeScr
 	add esp, 12
@@ -249,7 +252,7 @@ schedule:
 	push es
 	push fs
 	push gs
-	mov eax, offset currentProcess
+	mov eax, [currentProcess]
 	mov [eax], esp
 	mov ebx, offset process_queue
 	push eax
@@ -265,13 +268,25 @@ schedule:
 	push eax
 	call writeScr
 	hlt
+
 _schedule_cont_causeFault:
 	push offset process_queue
 	call getProcess
 	add esp, 4
-	mov edx, offset currentProcess
-	mov [edx], eax
+	cmp eax, 0
+	jnz _schedule_cont_getProcess
+	//call causeFault
+	mov eax, offset Schedule_Fault_msg
+	push 77
+	push 0
+	push eax
+	call writeScr
+	//hlt
+_schedule_cont_getProcess:
+	mov [currentProcess], eax
 	mov esp, [eax]
+	//mov edx, offset currentProcess
+	//mov [edx], eax
 	pop gs
 	pop fs
 	pop es

@@ -1,4 +1,4 @@
-all: install alls
+all: install
 alls: boot2 boot1 
 
 boot2: boot2.exe boot2.S
@@ -30,7 +30,7 @@ install: alls
 	qemu-system-i386 -boot a -fda a.img &
 .phony debug:
 debug: boot2.exe boot1 boot2 install
-	qemu-system-i386 -S -s -boot a -fda a.img &
+	qemu-system-i386 -S -gdb tcp::9009 -boot a -fda a.img &
 	echo "At the gdb prompt enter \"target remote localhost:1234\""
-	ddd boot2.exe &
+	ddd --debugger 'gdb -ex "target remote localhost:9009" 'boot2.exe &
 
