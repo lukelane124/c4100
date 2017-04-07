@@ -27,8 +27,9 @@ int current_idt_entry_count = 0;			//Indes for filling table.
 keyboardBuffer_t keyboard_buffer;			//Keyboard buffer.
 uint32_t stacks [10][1024];					//Stack table for process allocation.
 int next_stack = 0;								//Stack index.
-extern PCB_t pcbs [10][sizeof(PCB_t)];				//PCB table for BPC allocation.
-PCB_t pcbs [10][sizeof(PCB_t)];
+//extern PCB_t pcbs [10][sizeof(PCB_t)];				//PCB table for BPC allocation.
+PCB_t pcbs [10];
+//[sizeof(PCB_t)];
 int pcb_count = 0;								//Index for pcb table.
 PQ process_queue;
 PCB_t *currentProcess;						//Current running process.
@@ -123,13 +124,13 @@ void clearscr_box(int r1, int c1, int r2, int c2) {
 
 //Main Program
 int main() {
-	char charbuff[20];
+	/*char charbuff[20];
 	clearScr();
 	color = 32;
 	clearscr_box(0, 0, 2, 0);
 	gets(&charbuff, 20);
 
-	/*
+	*/
 	initializeQueue(&keyboard_buffer);
 	clearScr();
 	writeScr("Running ten processes", 0,0);
@@ -147,7 +148,7 @@ int main() {
 	init_timer_device(50);
 	//asm("sti");	
 	go();
-	*/
+	
 	while(1){};
 }
 

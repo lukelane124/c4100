@@ -149,7 +149,7 @@ char addProcess(PQ *q, uint32_t process) {
 		return false;
 	else {
 		q->data[q->tail++] = process;
-		if (q->tail > MAX_ITEMS)
+		if (q->tail >= MAX_ITEMS)
 			q->tail = 0;
 		q->numItems++;
 		return true;
@@ -161,8 +161,10 @@ uint32_t getProcess(PQ *q) {
 	if (isProcessEmpty(q))
 		return 0;
 	else{
-		ret = q->data[q->top++];
-		if (q->top > MAX_ITEMS)
+		ret = q->data[q->top];
+		q->data[q->top] = 0;
+		q->top++;
+		if (q->top >= MAX_ITEMS)
 			q->top = 0;
 		q->numItems--;
 

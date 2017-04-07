@@ -93,9 +93,9 @@ char k_getchar(keyboardBuffer_t *kb) {
 	}
 }
 extern int pcb_count;
-extern PCB_t pcbs [10][sizeof(PCB_t)];
+extern PCB_t pcbs [10];
 PCB_t* allocatePCB() {
-	return pcbs[pcb_count];
+	return &pcbs[pcb_count];
 }
 
 extern uint32_t stacks [10][1024];
