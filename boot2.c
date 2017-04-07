@@ -18,6 +18,9 @@ void causeFault();
 char translate_scancode(int what);
 void kbd_handler(unsigned int scancode);
 void init_timer_dev();
+void clearscr_box(int r1, int c1, int r2, int c2);
+int gets(char *s, int maxlen);
+void writeln(char *string);
 
 //Global variable section
 extern uint8_t color;
@@ -33,6 +36,9 @@ PCB_t pcbs [10];
 int pcb_count = 0;								//Index for pcb table.
 PQ process_queue;
 PCB_t *currentProcess;						//Current running process.
+int _row = 0;
+int _col = 0;
+
 
 //C Functions.
 void initIDT() {
@@ -58,55 +64,68 @@ void initIDT() {
 #define STACK_SIZE 1024
 #define CODE_SEL 16
 
+void set_cursor(int row, int col) {
+	_row = row;
+	_col = col;
+}
+
+
 void p1() {
-	int i = 0;
-	char buff[20];
-	writeScr("Process 1, thanks...", 0, 0);
+	char *msg = "Process p1: ";
+	writeln(msg);
 	while (1) {
-		i += 1;
-		convert_num(i, buff);
-		writeScr(buff, 1, 0);
-	}
+		clearscr_box(0,0, 9, 79);
+		set_cursor(0,0);
+		writeln("Please enter a string less than 20 characters:");
+		//set_cursor(0, 0);
+		char s[21];
+		char t[21];
+		gets(s, 20);
+		writeln("You entered: ");
+		writeln(s);
+		writeln("Hit enter to continue.");
+		gets(t, 20);
+		writeScr(s, 10, 0);
+	}	
 }
 
 void p2() {
 	int i2 = 0;
 	char buff2[20];
-	writeScr("Process 2, thanks...", 10,0);
+	writeScr("Process 2, thanks...", 12,0);
 	while (1) {
 		i2 += 1;
 		convert_num(i2, buff2);
-		writeScr(buff2, 11, 0);
+		writeScr(buff2, 13, 0);
 	}
 }
 
+void writeln(char *string) {
+	if (_col != 0)
+		_col = 0;
+	writeScr(string, _row, _col);
+	_row++;
+	if (_row > 80)
+		_row = 0;
 
-/*void schedule() {
-	asm("pushad");
-	asm("push ")
-}*/
-//Need to create a method to delay
-//current process.
 
-/*
-Note that you will have to provide clearscr_box() and gets().  The function clearscr_box() clears a portion 
-of the screen from r1, c1 until r2, c2 and has the prototype: void clearscr_box(int r1, int c1, int r2, int c2).
-The function gets() reads a line of text.  In other words, it reads characters and concatenates them onto 
-its first argument until it hits a new line, or has concatenated the number of letters specified by its 
-second argument.  Its prototype is: int gets(char *s, int maxlen).
-*/
+}
 
 int gets(char *s, int maxlen) {
 	int size = 0;
 	char c;
 	while (size < maxlen) {
 		c = k_getchar(&keyboard_buffer);
-		if (c == '\n')
-			return size;
+		if (c == '\n') 
+			break;
+		else if (c == 0)
+			continue;
 		else {
 			s[size++] = c;
 		}
 	}
+	s[size] = 0;
+	return size;
 }
 
 void clearscr_box(int r1, int c1, int r2, int c2) {
@@ -121,19 +140,10 @@ void clearscr_box(int r1, int c1, int r2, int c2) {
 	writeScr(mt, r1, c1);
 
 }
-
+	
 //Main Program
 int main() {
-	/*char charbuff[20];
-	clearScr();
-	color = 32;
-	clearscr_box(0, 0, 2, 0);
-	gets(&charbuff, 20);
-
-	*/
 	initializeQueue(&keyboard_buffer);
-	clearScr();
-	writeScr("Running ten processes", 0,0);
 	clearScr();
 	initIDT();
 	setupPIC();

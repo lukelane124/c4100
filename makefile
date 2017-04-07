@@ -34,3 +34,6 @@ debug: boot2.exe boot1 boot2 install
 	echo "At the gdb prompt enter \"target remote localhost:1234\""
 	ddd --debugger 'gdb -ex "target remote localhost:9009" 'boot2.exe &
 
+.phony redebug:
+redebug: boot2.exe boot1 boot2 install
+	qemu-system-i386 -S -gdb tcp::9009 -boot a -fda a.img &

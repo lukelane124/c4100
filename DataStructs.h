@@ -54,7 +54,7 @@ char putItem(keyboardBuffer_t *q, unsigned char theItemValue) {
 		return false;
 	else {
 		q->data[q->tail++] = theItemValue;
-		if (q->tail > MAX_ITEMS)
+		if (q->tail >= MAX_ITEMS)
 			q->tail = 0;
 		q->numItems++;
 		return true;
@@ -67,7 +67,7 @@ unsigned char getItem(keyboardBuffer_t *q) {
 		return 0;
 	else{
 		ret = q->data[q->top++];
-		if (q->top > MAX_ITEMS)
+		if (q->top >= MAX_ITEMS)
 			q->top = 0;
 		q->numItems--;
 
