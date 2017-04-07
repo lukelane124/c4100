@@ -20,6 +20,7 @@ void kbd_handler(unsigned int scancode);
 void init_timer_dev();
 
 //Global variable section
+extern uint8_t color;
 extern PQ process_queue;
 IDT idt_entry_t[256];						//IDT table.
 int current_idt_entry_count = 0;			//Indes for filling table.
@@ -59,7 +60,7 @@ void initIDT() {
 void p1() {
 	int i = 0;
 	char buff[20];
-	writeScr("Process 1, thanks...", 0,0);
+	writeScr("Process 1, thanks...", 0, 0);
 	while (1) {
 		i += 1;
 		convert_num(i, buff);
@@ -72,7 +73,6 @@ void p2() {
 	char buff2[20];
 	writeScr("Process 2, thanks...", 10,0);
 	while (1) {
-		
 		i2 += 1;
 		convert_num(i2, buff2);
 		writeScr(buff2, 11, 0);
@@ -87,8 +87,49 @@ void p2() {
 //Need to create a method to delay
 //current process.
 
+/*
+Note that you will have to provide clearscr_box() and gets().  The function clearscr_box() clears a portion 
+of the screen from r1, c1 until r2, c2 and has the prototype: void clearscr_box(int r1, int c1, int r2, int c2).
+The function gets() reads a line of text.  In other words, it reads characters and concatenates them onto 
+its first argument until it hits a new line, or has concatenated the number of letters specified by its 
+second argument.  Its prototype is: int gets(char *s, int maxlen).
+*/
+
+int gets(char *s, int maxlen) {
+	int size = 0;
+	char c;
+	while (size < maxlen) {
+		c = k_getchar(&keyboard_buffer);
+		if (c == '\n')
+			return size;
+		else {
+			s[size++] = c;
+		}
+	}
+}
+
+void clearscr_box(int r1, int c1, int r2, int c2) {
+	int row = r2-r1;
+	int col = c2-c1;
+	int size = row*80+col;
+	char mt[2000];
+	for (row = 0; row < size; row++) {
+		mt[row] = ' ';
+	}
+	mt[row] = 0;
+	writeScr(mt, r1, c1);
+
+}
+
 //Main Program
 int main() {
+	char charbuff[20];
+	clearScr();
+	color = 32;
+	clearscr_box(0, 0, 2, 0);
+	gets(&charbuff, 20);
+
+	/*
 	initializeQueue(&keyboard_buffer);
 	clearScr();
 	writeScr("Running ten processes", 0,0);
@@ -106,5 +147,7 @@ int main() {
 	init_timer_device(50);
 	//asm("sti");	
 	go();
+	*/
+	while(1){};
 }
 

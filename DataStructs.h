@@ -122,7 +122,7 @@ struct Round_Robin_queue_s {
     uint32_t data[MAX_ITEMS];
 }__attribute__((packed));
 typedef struct Round_Robin_queue_s PQ;
-#define Round_Robin_queue_s PQ;
+//#define Round_Robin_queue_s PQ;
 
 
 void initializeProcessQueue(PQ *q) {

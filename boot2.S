@@ -11,6 +11,7 @@
 .global go
 .global schedule
 .global init_timer_device
+.global color
 //Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
@@ -20,9 +21,39 @@ cursor_location:.short 0
 color: .byte 31
 Kernel_Panic_msg:	.ascii "The kernel has experienced a panic, "
 					.asciz "sorry.... System will now halt, reccomend taking a core dump."
-Schedule_Fault_msg:	.asciz "The kernel fault was caused by a problem with the scheduler!"
+Schedule_Fault_msg1:	.asciz "The kernel fault was caused by a problem with the scheduler & addProcess!"
+Schedule_Fault_msg2:	.asciz "The kernel fault was caused by a problem with the scheduler & getProcess!"
 
 IntCounter: .short 0
+
+ms_delay:
+	push ebp
+	mov ebp, esp
+	pusha
+	mov eax, [ebp+4]
+	cmp eax, 0
+	jb _ms_delay_end
+
+_ms_delay_outer_loop:
+	cmp eax, 0
+	jz _ms_delay_end
+	dec eax
+
+	mov edx, 100000
+_ms_delay_loop:
+	cmp edx, 0
+	jz _ms_delay_end
+	dec edx
+	nop
+	nop
+	pusha
+	popa
+	pusha
+	popa
+_ms_delay_end:
+	popa
+	pop ebp
+	ret
 
 causeFault:
 	push eax
@@ -131,30 +162,30 @@ clearScr:
 	mov eax, offset End_of_S	//Load eax with the value of the memory location that corresponds to mt space used for temp variables by Kernel.
 	mov ebx, offset 2001		//Use ebx as counter to keep up with current location in string building process.
 clearScr_build_string_loop:		//Build a string of 2000 spaces.
-	dec ebx				//Update counting variable.
-	cmp ebx, 0			//Compare counting variable to zero, if zero, end of string reached.
+	dec ebx						//Update counting variable.
+	cmp ebx, 0					//Compare counting variable to zero, if zero, end of string reached.
 	je clearScr_build_string_end	//Jump to "printing" step of clearScr.
-	movb [eax], 32			//Mov 32('space') into the memory address pointed to by eax.
-	inc eax				//Increment eax to update current location for writing spaces.
+	movb [eax], 32				//Mov 32('space') into the memory address pointed to by eax.
+	inc eax						//Increment eax to update current location for writing spaces.
 	jmp clearScr_build_string_loop	//Repeat till 2000 spaces loaded into memory.
 
 clearScr_build_string_end:		//Calls write screen to print spaces, and cleans up.
-	movb [eax], 0			//Move a zero into eax for null termination.
-	mov eax, 0			//Move the zero into the end of the string so that it is null terminated.
-	push eax			//PUSH 0 for col number.
-	push eax			//PUSH 0 for row number.
+	movb [eax], 0				//Move a zero into eax for null termination.
+	mov eax, 0					//Move the zero into the end of the string so that it is null terminated.
+	push eax					//PUSH 0 for col number.
+	push eax					//PUSH 0 for row number.
 	mov eax, offset End_of_S	//Load eax with the address of the begginning of the string.
-	push eax			//PUSH the address for the begginning of the string, or char buffer.
-	call writeScr			//call writeScr to write the mt string to the screen.
+	push eax					//PUSH the address for the begginning of the string, or char buffer.
+	call writeScr				//call writeScr to write the mt string to the screen.
 	pop eax
-	pop eax				//pop passed values from the stack.
+	pop eax						//pop passed values from the stack.
 	pop eax
 
-	pop ebx				//return original state to ebx, and eax.
+	pop ebx						//return original state to ebx, and eax.
 	pop eax
 
 	popf
-	pop ebp				//clean up stack frame
+	pop ebp						//clean up stack frame
 	ret
 
 
@@ -185,7 +216,7 @@ outportb:
 go:
 	//I''m never returning to main... remove return call cs, and flags.
 	//add esp, 4						
-	mov eax, offset process_queue	//load address of PQ into eax
+	mov eax, offset process_queue		//load address of PQ into eax
 	push eax							//Pass pq to getProcess, dequeue
 	call getProcess						//Call to get next process.
 	# mov ebx, offset currentProcess		//Load pointer curproc with new current process that was dequeued.
@@ -247,22 +278,23 @@ default_handler:
 	iret
 
 schedule:
-	pushad
+	pushad								//Preserve Current program state
 	push ds
 	push es
 	push fs
 	push gs
-	mov eax, [currentProcess]
-	mov [eax], esp
-	mov ebx, offset process_queue
+
+	mov eax, [currentProcess]			//Move the pointer to the current process''s PCB into eax.
+	mov [eax], esp						//Move the stack pointer value into sp for current process.
+	mov ebx, offset process_queue		//Load b with address of the process_queue.
 	push eax
-	push ebx
-	call addProcess
-	add esp, 8
-	cmp eax, 0
-	jnz _schedule_cont_causeFault
-	call causeFault
-	mov eax, offset Schedule_Fault_msg
+	push ebx							//Push addProcess args onto stack in rev order.
+	call addProcess						//Call addProcess to place currently running process onto stack.
+	add esp, 8							//Clean Stack.
+	cmp eax, 0							//Check for errors in adding process.
+	jnz _schedule_cont_causeFault		//If no errors move to grabbing next process of process_queue
+	//call causeFault					//Cause a div 0 fault.
+	mov eax, offset Schedule_Fault_msg1	//Write error message to screen and halt the system.
 	push 77
 	push 0
 	push eax
@@ -270,23 +302,21 @@ schedule:
 	hlt
 
 _schedule_cont_causeFault:
-	push offset process_queue
-	call getProcess
+	push offset process_queue			//Push process_queue pointer onto stack.
+	call getProcess						//Grab next process off the process_queue
 	add esp, 4
-	cmp eax, 0
-	jnz _schedule_cont_getProcess
+	cmp eax, 0							//Check for errors.
+	jnz _schedule_cont_getProcess		//cont if no errors.
 	//call causeFault
-	mov eax, offset Schedule_Fault_msg
+	mov eax, offset Schedule_Fault_msg2	
 	push 77
 	push 0
 	push eax
 	call writeScr
-	//hlt
+	hlt
 _schedule_cont_getProcess:
 	mov [currentProcess], eax
 	mov esp, [eax]
-	//mov edx, offset currentProcess
-	//mov [edx], eax
 	pop gs
 	pop fs
 	pop es
