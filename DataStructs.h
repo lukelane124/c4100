@@ -14,10 +14,10 @@ struct IDT_s {
 } __attribute__((packed));
 typedef struct IDT_s IDT;
 
-struct gdt_r_s {
-	uint16_t limit;
+struct gdt_r_s 
+{	uint16_t limit;
 	uint32_t base;
-} __attribute__((packed));
+} __attribute__((packed));	
 typedef struct gdt_r_s gdt_r_t;
 
 //CircularQueue, and associated Functions.
@@ -175,5 +175,7 @@ uint32_t getProcess(PQ *q) {
 struct PCB_s {
 	uint32_t sp;
 	int pid;
+	int row;
+	int col;
 }__attribute__((packed));
 typedef struct PCB_s PCB_t;

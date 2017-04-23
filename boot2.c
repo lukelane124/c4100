@@ -84,7 +84,7 @@ void p1() {
 		writeln("You entered: ");
 		writeln(s);
 		writeln("Hit enter to continue.");
-		gets(t, 20);
+		while(k_getchar(&keyboard_buffer) != '\n'){}
 		writeScr(s, 10, 0);
 	}	
 }
@@ -114,6 +114,7 @@ void writeln(char *string) {
 int gets(char *s, int maxlen) {
 	int size = 0;
 	char c;
+	char zero = 0;
 	while (size < maxlen) {
 		c = k_getchar(&keyboard_buffer);
 		if (c == '\n') 
@@ -122,6 +123,8 @@ int gets(char *s, int maxlen) {
 			continue;
 		else {
 			s[size++] = c;
+			writeScr(&c, _row, _col++);
+			//_col++;
 		}
 	}
 	s[size] = 0;
