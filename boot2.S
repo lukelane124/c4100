@@ -12,6 +12,9 @@
 .global schedule
 .global init_timer_device
 .global color
+.global pushf_cli_fun
+.global popf_fun
+.global vterm_foreground_next
 //Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
@@ -25,6 +28,23 @@ Schedule_Fault_msg1:	.asciz "The kernel fault was caused by a problem with the s
 Schedule_Fault_msg2:	.asciz "The kernel fault was caused by a problem with the scheduler & getProcess!"
 
 IntCounter: .short 0
+
+pushf_cli_fun:	// uint32_t pushf_cli_fun()
+	pushf
+	cli			//disbla interrupts, and return flags register.
+	pop eax
+	ret
+
+popf_fun:	//void popf_fun(uint32_t eflags)
+	push ebp
+	mov ebp, esp	
+	push [ebp+8]
+	popf			//set passed 32bit int as flag register.
+	pop ebp
+	ret
+
+vterm_foreground_next: // 
+	ret
 
 ms_delay:
 	push ebp
@@ -361,6 +381,11 @@ kdb_handler:
 	mov eax, [ebp+8]
 	cmp eax, 0
 	jz _kdb_handler_skip
+	cmp eax, 0x3b
+	jnz _kdb_hander_no_procSwitch
+	call vterm_foreground_next
+	jmp _kdb_handler_skip
+_kdb_hander_no_procSwitch:
 	mov ebx, offset keyboard_buffer
 	mov ecx, [ebx+6]
 	mov edx, [ebx+8]

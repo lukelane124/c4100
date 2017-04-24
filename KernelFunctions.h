@@ -141,6 +141,8 @@ uint32_t createProcess(uint32_t ds, uint32_t ss, uint32_t stackTop,
 	PCB_t *pcb = allocatePCB();
 	pcb->sp = (uint32_t) sp;
 	pcb->pid = pcb_count++;
+	pcb->row = 0;
+	pcb->col = 0;
 	addProcess(&process_queue, (uint32_t) pcb);
 	return (uint32_t) pcb;
 }

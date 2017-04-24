@@ -40,6 +40,7 @@ int _row = 0;
 int _col = 0;
 
 
+
 //C Functions.
 void initIDT() {
 	int i;
@@ -65,8 +66,8 @@ void initIDT() {
 #define CODE_SEL 16
 
 void set_cursor(int row, int col) {
-	_row = row;
-	_col = col;
+	currentProcess->row = row;
+	currentProcess->col = col;
 }
 
 
@@ -101,12 +102,12 @@ void p2() {
 }
 
 void writeln(char *string) {
-	if (_col != 0)
-		_col = 0;
-	writeScr(string, _row, _col);
-	_row++;
-	if (_row > 80)
-		_row = 0;
+	if (currentProcess->col != 0)
+		currentProcess->col = 0;
+	writeScr(string, currentProcess->row, currentProcess->col);
+	currentProcess->row++;
+	if (currentProcess->row > 40)
+		currentProcess->row = 0;
 
 
 }
@@ -123,7 +124,7 @@ int gets(char *s, int maxlen) {
 			continue;
 		else {
 			s[size++] = c;
-			writeScr(&c, _row, _col++);
+			writeScr(&c, currentProcess->row, currentProcess->col++);
 			//_col++;
 		}
 	}
