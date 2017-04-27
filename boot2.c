@@ -3,7 +3,8 @@
 #include<stdint.h>
 //#include"./DataStructs.h"
 #include "./KernelFunctions.h"
-
+#define true 1
+#define false 0
 
 //Prototype Section
 void noShut();
@@ -21,6 +22,10 @@ void init_timer_dev();
 void clearscr_box(int r1, int c1, int r2, int c2);
 int gets(char *s, int maxlen);
 void writeln(char *string);
+uint32_t pushf_cli_fun();
+void popf_fun(uint32_t eflags);
+void vterm_block_if_background();
+void sched_fun(PQ*, PCB_t*);
 
 //Global variable section
 extern uint8_t color;
@@ -38,7 +43,36 @@ PQ process_queue;
 PCB_t *currentProcess;						//Current running process.
 int _row = 0;
 int _col = 0;
+int cur_vterm = 0;
+PQ vterm_q;
 
+
+uint32_t modulo(int a, int b) {
+	return a%b;
+}
+void vterm_foreground_next() {
+	uint32_t temp = pushf_cli_fun();
+	cur_vterm = (cur_vterm + 1) % pcb_count;
+	char buff[5];
+	convert_num(cur_vterm, buff);
+	writeScr(buff, 0, 77);
+	if (!isProcessEmpty(&vterm_q)) {
+		uint32_t temp  = (uint32_t) getProcess(&vterm_q);
+		addProcess(&process_queue, temp);
+	}
+	popf_fun(temp);
+	return;
+}
+
+void vterm_block_if_background() {
+	while(cur_vterm != currentProcess->pid) {
+		if (!isProcessEmpty(&vterm_q)) {
+			uint32_t temp = getProcess(&vterm_q);
+		}		
+		sched_fun(&vterm_q, currentProcess);
+		go();
+	}
+}
 
 
 //C Functions.
@@ -114,10 +148,14 @@ void writeln(char *string) {
 
 int gets(char *s, int maxlen) {
 	int size = 0;
-	char c;
 	char zero = 0;
+	char c;
+	char zero1 = 0;
 	while (size < maxlen) {
+		uint32_t eflags = pushf_cli_fun();
+		vterm_block_if_background();
 		c = k_getchar(&keyboard_buffer);
+		popf_fun(eflags);
 		if (c == '\n') 
 			break;
 		else if (c == 0)
@@ -148,6 +186,7 @@ void clearscr_box(int r1, int c1, int r2, int c2) {
 //Main Program
 int main() {
 	initializeQueue(&keyboard_buffer);
+	initializeProcessQueue(&vterm_q);
 	clearScr();
 	initIDT();
 	setupPIC();
@@ -159,6 +198,7 @@ int main() {
 	s = (uint32_t) allocStack();
 	createProcess((uint32_t) DATA_SEL, (uint32_t) STACK_SEL, (uint32_t) (s + STACK_SIZE),
 		(uint32_t) CODE_SEL, (uint32_t) p2);
+	//addProcess(&vterm_q, getProcess(&process_queue));
 	init_timer_device(50);
 	//asm("sti");	
 	go();

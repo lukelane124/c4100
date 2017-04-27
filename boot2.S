@@ -14,7 +14,9 @@
 .global color
 .global pushf_cli_fun
 .global popf_fun
-.global vterm_foreground_next
+.global sched_fun
+//.global vterm_foreground_next
+//.global vterm_block_if_background
 //Kernel variables section.
 eax_msg: .ascii "The value in the EAX register is: "
 eax_val: .asciz "0000000000"  // ten spaces, the max number of digits in an unsigned int
@@ -43,8 +45,22 @@ popf_fun:	//void popf_fun(uint32_t eflags)
 	pop ebp
 	ret
 
-vterm_foreground_next: // 
-	ret
+// vterm_foreground_next: // 
+// 	pusha
+// 	mov eax, cur_vterm
+// 	inc eax
+// 	mov ebx, pcb_count
+// 	cmp eax, ebx
+// 	jz _vterm_foreground_next_fix_pcb
+// 	mov cur_term, eax
+// 	mov eax, 
+
+
+// _vterm_foreground_next_fix_pcb:
+
+
+// _vterm_foreground_next_end:
+// 	ret
 
 ms_delay:
 	push ebp
@@ -284,7 +300,99 @@ init_timer_device:
 
 
 	
+// vterm_foreground_next:
+// 	cli
+// 	pusha
+// 	mov eax, cur_vterm
+// 	inc eax
+// 	mov ebx, pcb_count
+// 	push ebx
+// 	push eax
+// 	call modulo
+// 	mov cur_vterm, eax
+// 	add esp, 8
+// 	mov eax, offset vterm_q
+// 	push eax
+// 	call isProcessEmpty
+// 	add esp, 4
+// 	cmp eax, 0
+// 	jz _vterm_foreground_next_end
+// 	mov eax, offset vterm_q
+// 	push eax
+// 	call getProcess
+// 	add esp, 4 
+// 	push eax
+// 	mov eax, offset process_queue
+// 	push eax
+// 	call addProcess
+// 	add esp, 8
+// 	push offset End_of_S+1
+// 	push cur_vterm
+// 	call convert_num
+// 	add esp, 8
+// 	push offset 78
+// 	push offset 0
+// 	push offset End_of_S
+// 	movb End_of_S, offset 80
+// 	call writeScr
+// 	add esp, 12
+// _vterm_foreground_next_end:
+// 	popa
+// 	sti
+// 	ret
 
+
+
+// vterm_block_if_background:
+// 	cli
+// 	pusha
+// _vterm_block_if_background_while:
+// 	mov eax, cur_vterm
+// 	mov ebx, [currentProcess]
+// 	mov ebx, [ebx+4]
+// 	cmp eax, ebx
+// 	jz _vterm_block_if_background_while_end
+// 	push offset vterm_q
+// 	call isProcessEmpty
+// 	add esp, 4
+// 	cmp eax, 0
+// 	jz _vterm_block_if_background_while_if_end
+// 	mov eax, offset vterm_q
+// 	push eax
+// 	call getProcess
+// 	add esp, 4
+// 	push eax
+// 	push process_queue
+// 	call addProcess
+// 	add esp, 8
+// _vterm_block_if_background_while_if_end:
+// 	push offset currentProcess
+// 	push offset vterm_q
+// 	call sched_fun
+// 	add esp, 8
+// 	jmp _vterm_block_if_background_while
+
+	
+// _vterm_block_if_background_while_end:
+// 	popa
+// 	sti
+// 	ret
+
+sched_fun:
+	pushad								//Preserve Current program state
+	push ds
+	push es
+	push fs
+	push gs
+
+	mov eax, [currentProcess]			//Move the pointer to the current process''s PCB into eax.
+	mov [eax], esp						//Move the stack pointer value into sp for current process.
+	mov ebx, offset vterm_q		//Load b with address of the process_queue.
+	push eax
+	push ebx							//Push addProcess args onto stack in rev order.
+	call addProcess			
+	add esp, 8
+	call go
 
 //Interupt Section.
 
