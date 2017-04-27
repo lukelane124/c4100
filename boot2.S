@@ -379,6 +379,9 @@ init_timer_device:
 // 	ret
 
 sched_fun:
+	pushf
+	push cs
+	push offset _sched_fun_end
 	pushad								//Preserve Current program state
 	push ds
 	push es
@@ -390,9 +393,13 @@ sched_fun:
 	mov ebx, offset vterm_q		//Load b with address of the process_queue.
 	push eax
 	push ebx							//Push addProcess args onto stack in rev order.
-	call addProcess			
+	call addProcess
 	add esp, 8
-	call go
+	jmp go
+
+_sched_fun_end:
+	
+	ret
 
 //Interupt Section.
 
@@ -515,7 +522,7 @@ _kdb_handler_skip:
 
 //Space reserved for OS data structures, Do not declare any functions past this point.
 End_of_S:
-.fill 5000, 1, 0			//MT space for filling strings.
+.fill 10000, 1, 0			//MT space for filling strings.
 
 
 

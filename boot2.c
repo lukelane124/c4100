@@ -51,27 +51,30 @@ uint32_t modulo(int a, int b) {
 	return a%b;
 }
 void vterm_foreground_next() {
-	uint32_t temp = pushf_cli_fun();
+	//uint32_t temp = pushf_cli_fun();
 	cur_vterm = (cur_vterm + 1) % pcb_count;
-	char buff[5];
-	convert_num(cur_vterm, buff);
-	writeScr(buff, 0, 77);
 	if (!isProcessEmpty(&vterm_q)) {
 		uint32_t temp  = (uint32_t) getProcess(&vterm_q);
 		addProcess(&process_queue, temp);
 	}
-	popf_fun(temp);
+	char buff[5];
+	convert_num(cur_vterm, buff);
+	writeScr(buff, 0, 77);
+	//popf_fun(temp);
 	return;
 }
 
 void vterm_block_if_background() {
+	//uint32_t temp = pushf_cli_fun();
 	while(cur_vterm != currentProcess->pid) {
 		if (!isProcessEmpty(&vterm_q)) {
 			uint32_t temp = getProcess(&vterm_q);
-		}		
-		sched_fun(&vterm_q, currentProcess);
-		go();
+		}	
+		sched_fun(&vterm_q, currentProcess);	
 	}
+	
+	//popf_fun(temp);
+		return;
 }
 
 
@@ -118,21 +121,62 @@ void p1() {
 		gets(s, 20);
 		writeln("You entered: ");
 		writeln(s);
-		writeln("Hit enter to continue.");
-		while(k_getchar(&keyboard_buffer) != '\n'){}
+		writeln("Hit any key to continue.");
+		//while(k_getchar(&keyboard_buffer) != '\n'){}
+		while(1){
+			gets(t,1);
+			if (t[0] = '\n')
+				break;
+		}
 		writeScr(s, 10, 0);
 	}	
 }
 
-void p2() {
-	int i2 = 0;
-	char buff2[20];
-	writeScr("Process 2, thanks...", 12,0);
-	while (1) {
-		i2 += 1;
-		convert_num(i2, buff2);
-		writeScr(buff2, 13, 0);
+int stoi(char *s) {
+	int i = 0;
+	while (*s) {
+		if (*s >= '0' && *s <= '9') {
+			i *= 10;
+			i += (*s++ - '0');
+		} else {
+			i = 0;
+			break;
+		}
 	}
+	return i;
+}
+
+int is_prime(int n) {
+  int i;
+  if (n == 2) return 1;
+  for (i = 2; i < n - 1; i++) {
+    if (n % i == 0) return 0;
+  }	
+  return 1;
+}
+
+
+void p2() {
+	while(1) {	
+		char buff[11];
+		int i;
+		int primeCount;
+		currentProcess->row = 15;
+		writeln("Please enter a less than 11 digit number to calculate the number of primes between that number and zero.");
+		gets(buff, 11);
+		int number = stoi(buff);
+		for (i = 0; i < number; i++) {
+			if (is_prime(number - i)) 
+				primeCount++;
+		}
+		clearscr_box(11, 0, 14, 79);
+		writeln("The # of primes between zero and");
+		writeln(buff);
+		writeln(" is ");
+		convert_num(primeCount, buff);
+		writeln(buff);
+	}	
+
 }
 
 void writeln(char *string) {
@@ -171,15 +215,21 @@ int gets(char *s, int maxlen) {
 }
 
 void clearscr_box(int r1, int c1, int r2, int c2) {
-	int row = r2-r1;
-	int col = c2-c1;
-	int size = row*80+col;
+	uint32_t temp = pushf_cli_fun();
+	int rows = r2-r1;
+	int cols = c2-c1;
+	int size = rows*80+cols;
 	char mt[2000];
-	for (row = 0; row < size; row++) {
-		mt[row] = ' ';
+	if (size > 2000) {
+		//set_cursor(0,0);
+		writeScr("There is an error in clearscr_box with the size...", 5, 0);
 	}
-	mt[row] = 0;
+	for (rows = 0; rows < size; rows++) {
+		mt[rows] = ' ';
+	}
+	mt[rows] = 0;
 	writeScr(mt, r1, c1);
+	popf_fun(temp);
 
 }
 	
